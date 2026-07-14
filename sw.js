@@ -1,6 +1,6 @@
 // 卜卜WithYou 离线缓存:成功打开一次后,断网/网络被阻断也能正常游玩
 // 策略:缓存优先+后台更新(stale-while-revalidate)——秒开,新版本在后台悄悄拉取,下次启动生效
-const CACHE = 'bubu-v2';
+const CACHE = 'bubu-v3';
 const CORE = [
   './',
   './index.html',
@@ -11,8 +11,15 @@ const CORE = [
   './assets/apple-touch-icon.png'
 ];
 
+// 城市卡片素材:安装时后台预热(单个失败忽略,不阻断核心缓存)
+const CITY_IDS = ['01','02','03','04','05','06','07','08','09','10','11','12','13','14','15','16','17','18','19','20'];
+const WARM = CITY_IDS.flatMap(id => ['./assets/cities/' + id + '.webp', './assets/cities/' + id + '-name.webp']);
+
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CACHE).then(async c => {
+    await c.addAll(CORE);
+    await Promise.all(WARM.map(u => c.add(u).catch(() => {})));
+  }).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', e => {
