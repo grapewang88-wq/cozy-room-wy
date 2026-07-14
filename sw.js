@@ -32,6 +32,8 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
+  // 跨域请求(IP定位API等)不缓存不拦截,否则打卡会拿到第一次的陈旧城市
+  if (new URL(e.request.url).origin !== self.location.origin) return;
   // ignoreSearch:让 ?v7 之类的缓存穿透参数也命中缓存
   e.respondWith(
     caches.match(e.request, { ignoreSearch: true }).then(hit => {
