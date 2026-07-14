@@ -1,6 +1,6 @@
 // 卜卜WithYou 离线缓存:成功打开一次后,断网/网络被阻断也能正常游玩
 // 策略:缓存优先+后台更新(stale-while-revalidate)——秒开,新版本在后台悄悄拉取,下次启动生效
-const CACHE = 'bubu-v1';
+const CACHE = 'bubu-v2';
 const CORE = [
   './',
   './index.html',
