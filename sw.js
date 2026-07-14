@@ -1,6 +1,6 @@
 // 卜卜WithYou 离线缓存:成功打开一次后,断网/网络被阻断也能正常游玩
 // 策略:缓存优先+后台更新(stale-while-revalidate)——秒开,新版本在后台悄悄拉取,下次启动生效
-const CACHE = 'bubu-v3';
+const CACHE = 'bubu-v4';
 const CORE = [
   './',
   './index.html',
@@ -16,10 +16,8 @@ const CITY_IDS = ['01','02','03','04','05','06','07','08','09','10','11','12','1
 const WARM = CITY_IDS.flatMap(id => ['./assets/cities/' + id + '.webp', './assets/cities/' + id + '-name.webp']);
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(async c => {
-    await c.addAll(CORE);
-    await Promise.all(WARM.map(u => c.add(u).catch(() => {})));
-  }).then(() => self.skipWaiting()));
+  // 只缓存核心文件,保证新版SW秒装秒激活(预热放activate后台,绝不能拖慢版本更新!)
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', e => {
@@ -28,6 +26,8 @@ self.addEventListener('activate', e => {
       .then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
+  // 城市卡片后台预热:不进waitUntil、单个失败忽略,纯尽力而为(页面JS预取是主路径)
+  caches.open(CACHE).then(c => WARM.forEach(u => c.add(u).catch(() => {})));
 });
 
 self.addEventListener('fetch', e => {
