@@ -244,7 +244,7 @@ body.speaking .dayrow{opacity:0;pointer-events:none}
 .mask.nmopen{align-items:flex-start;padding-top:5%}  /* 名字框顶部对齐,避免键盘顶起画面 */
 /* 画布外的名字输入浮层:固定视口顶部,不受画布 transform 影响,手机键盘不再顶动画面 */
 #namefix{position:fixed;inset:0;z-index:99999;display:none;flex-direction:column;align-items:center;background:rgba(40,25,12,.5);padding:7vh 4vw 0;box-sizing:border-box}
-#namefix.show{display:flex;animation:fadein .2s}
+#namefix.show{display:flex;animation:fadein .2s;touch-action:none;overscroll-behavior:none}
 .nf-panel{width:100%;max-width:520px;box-sizing:border-box;padding:18px 18px 16px;border-radius:22px;background:#f7ecd6;box-shadow:0 8px 30px rgba(0,0,0,.45);border:3px solid #d9a86a}
 .nf-title{font-size:min(6vw,30px);font-weight:800;text-align:center;color:#7a4413}
 .nf-hint{font-size:min(3.6vw,15px);font-weight:700;text-align:center;color:#8a5a28;margin:4px 0 10px}
@@ -783,10 +783,12 @@ async function transformTo(sk){
 function editName(){ openNameInput(); }
 function openNameInput(){
   sfx.play('ui.tap'); sfx.play('ui.panelOpen');
-  // 锁定布局高度为“键盘弹出前”的高度 + body 固定定位：键盘弹出画布不位移、页面彻底不可滚动
+  // 锁定布局高度为“键盘弹出前”的高度 + body 固定定位：键盘弹出画布不位移
   try{ var _h=window.innerHeight, _b=document.body, _d=document.documentElement;
     _d.style.height=_h+'px'; _b.style.height=_h+'px';
     _b.style.position='fixed'; _b.style.top='0'; _b.style.left='0'; _b.style.right='0'; }catch(e){}
+  // 拦截滑动手势(Codex建议:捕获阶段+非passive,配合 #namefix touch-action:none 在手势识别阶段就拦下)
+  try{ document.addEventListener('touchmove', _nfNoScroll, {capture:true, passive:false}); }catch(e){}
   const dlg='assets/dialog-'+(SKIN==='jjb'?'jjb':'bubu')+'.webp';
   const nf=document.getElementById('namefix');
   nf.innerHTML=
@@ -801,7 +803,9 @@ function openNameInput(){
   nf.classList.add('show');
   setTimeout(function(){ try{inp.focus(); inp.select();}catch(e){} }, 60);
 }
+function _nfNoScroll(e){ if(e.cancelable) e.preventDefault(); }
 function closeNameInput(){ try{sfx.play('ui.panelClose');}catch(e){} document.getElementById('namefix').classList.remove('show');
+  try{ document.removeEventListener('touchmove', _nfNoScroll, {capture:true, passive:false}); }catch(e){}
   try{ var _b=document.body, _d=document.documentElement; _d.style.height=''; _b.style.height=''; _b.style.position=''; _b.style.top=''; _b.style.left=''; _b.style.right=''; }catch(e){} }
 function submitNameFromInput(){
   const inp=document.getElementById('nameInput'); if(!inp) return;
