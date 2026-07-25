@@ -1119,8 +1119,10 @@ setInterval(applySky,60000);
 function fitFrame(){const s=Math.min(window.innerWidth/1278,window.innerHeight/2272);
   document.querySelector('.frame').style.transform='scale('+s+')';}
 fitFrame();
-window.addEventListener('resize',fitFrame);
-window.addEventListener('orientationchange',()=>setTimeout(fitFrame,120));
+let _lastW=window.innerWidth;
+// 只在“宽度变化”(转屏)时重算缩放；键盘弹出只改高度，忽略它，避免画布被缩小、顶部露黑边
+window.addEventListener('resize',()=>{ if(window.innerWidth!==_lastW){ _lastW=window.innerWidth; fitFrame(); } });
+window.addEventListener('orientationchange',()=>setTimeout(()=>{ _lastW=window.innerWidth; fitFrame(); },120));
 // 离线缓存:成功打开过一次后,断网/github.io被阻断也能玩(file://本地打开时静默跳过)
 if('serviceWorker' in navigator){ try{ navigator.serviceWorker.register('sw.js').catch(()=>{}); }catch(e){} }
 // 首次交互解锁自动播放后,立即按当前状态决定是否开BGM
