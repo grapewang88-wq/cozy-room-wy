@@ -235,6 +235,12 @@ body.speaking .dayrow{opacity:0;pointer-events:none}
 /* ===== 弹层 ===== */
 .mask{position:absolute;inset:0;background:rgba(40,25,12,.5);display:none;align-items:center;justify-content:center;z-index:20;padding:10px}
 .mask.show{display:flex;animation:fadein .2s}
+.nm-plate{position:relative;width:100%;aspect-ratio:1697/603;background-size:contain;background-repeat:no-repeat;background-position:center;margin:4px 0}
+.nm-input{position:absolute;left:26%;width:62%;top:31%;height:36%;border:none;background:transparent;text-align:center;font-family:inherit;font-weight:800;font-size:46px;color:#5c3a17;outline:none;padding:0}
+.nm-input::placeholder{color:#bfa06e;font-weight:700}
+.nm-btns{display:flex;gap:16px;margin-top:8px}
+.nm-btns .closebtn{flex:1}
+.nm-ghost{filter:saturate(.5) brightness(1.03)}
 @keyframes fadein{from{opacity:0}to{opacity:1}}
 /* 用 border-image 九宫格:边框角固定,中段拉伸,任意高度边框厚度都正确,内容干净填满框内 */
 .sheet{border:42px solid transparent;border-image:var(--ui-panel) 155 fill;padding:12px;width:100%;height:90%;max-height:90%;max-width:none;
@@ -739,14 +745,32 @@ function transformTo(sk){
     setTimeout(()=>{ try{fx.remove();}catch(e){} try{sfx.play('bubu.happy');}catch(e){} }, 720);
   }catch(e){ applySkin(sk); }
 }
-function editName(){
-  const cur=S.name||'卜卜';
-  const n=prompt('给它起个名字吧～',cur);
-  if(n===null) return;
-  if(n.trim()==='恢复存档卜卜'){ restoreSave(); return; }
-  if(n.trim()==='GrapeW是静安木村拓哉'){ transformTo('jjb'); return; }
-  if(n.trim()==='GrapeW是静安梁朝伟'){ transformTo('bubu'); return; }
-  sfx.play('ui.confirm'); S.name=(n.trim().slice(0,8))||'卜卜'; save(); render();
+function editName(){ openNameInput(); }
+function openNameInput(){
+  sfx.play('ui.tap'); sfx.play('ui.panelOpen');
+  const sh=document.getElementById('sheet'); sh.classList.add('compact'); sh.classList.remove('album');
+  const dlg='assets/dialog-'+(SKIN==='jjb'?'jjb':'bubu')+'.webp';
+  sh.innerHTML=
+    '<h2>给'+(SKIN==='jjb'?'倔强卜卜':'卜卜')+'起名字</h2>'+
+    '<div class="hint">悄悄话:名字栏也许藏着小秘密…</div>'+
+    '<div class="nm-plate" style="background-image:url('+dlg+')"><input class="nm-input" id="nameInput" maxlength="20" autocomplete="off" placeholder="输入名字"></div>'+
+    '<div class="nm-btns"><button class="closebtn" onclick="submitNameFromInput()">确定</button><button class="closebtn nm-ghost" onclick="closeMask()">取消</button></div>';
+  const inp=document.getElementById('nameInput'); inp.value=S.name||(SKIN==='jjb'?'倔强卜卜':'卜卜');
+  inp.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); submitNameFromInput(); } });
+  document.getElementById('mask').classList.add('show');
+  setTimeout(function(){ try{inp.focus(); inp.select();}catch(e){} }, 60);
+}
+function submitNameFromInput(){
+  const inp=document.getElementById('nameInput'); if(!inp) return;
+  const n=inp.value; closeMask(); submitName(n);
+}
+function submitName(n){
+  if(n===null||n===undefined) return;
+  const t=String(n).trim();
+  if(t==='恢复存档卜卜'){ restoreSave(); return; }
+  if(t==='GrapeW是静安木村拓哉'){ transformTo('jjb'); return; }
+  if(t==='GrapeW是静安梁朝伟'){ transformTo('bubu'); return; }
+  sfx.play('ui.confirm'); S.name=(t.slice(0,8))||'卜卜'; save(); render();
 }
 function restoreSave(){
   const t=new Date(2026,6,12,12,0,0).getTime();
