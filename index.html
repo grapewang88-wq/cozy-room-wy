@@ -783,6 +783,8 @@ async function transformTo(sk){
 function editName(){ openNameInput(); }
 function openNameInput(){
   sfx.play('ui.tap'); sfx.play('ui.panelOpen');
+  // 锁定布局高度为“键盘弹出前”的高度：键盘弹出不再改变布局，画布不位移、页面不可滚动
+  try{ var _h=window.innerHeight; document.documentElement.style.height=_h+'px'; document.body.style.height=_h+'px'; }catch(e){}
   const dlg='assets/dialog-'+(SKIN==='jjb'?'jjb':'bubu')+'.webp';
   const nf=document.getElementById('namefix');
   nf.innerHTML=
@@ -797,7 +799,7 @@ function openNameInput(){
   nf.classList.add('show');
   setTimeout(function(){ try{inp.focus(); inp.select();}catch(e){} }, 60);
 }
-function closeNameInput(){ try{sfx.play('ui.panelClose');}catch(e){} document.getElementById('namefix').classList.remove('show'); }
+function closeNameInput(){ try{sfx.play('ui.panelClose');}catch(e){} document.getElementById('namefix').classList.remove('show'); try{ document.documentElement.style.height=''; document.body.style.height=''; }catch(e){} }
 function submitNameFromInput(){
   const inp=document.getElementById('nameInput'); if(!inp) return;
   const n=inp.value; closeNameInput(); submitName(n);
