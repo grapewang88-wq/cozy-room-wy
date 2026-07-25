@@ -242,6 +242,19 @@ body.speaking .dayrow{opacity:0;pointer-events:none}
 .nm-btns .closebtn{flex:1}
 .nm-ghost{filter:saturate(.5) brightness(1.03)}
 .mask.nmopen{align-items:flex-start;padding-top:5%}  /* 名字框顶部对齐,避免键盘顶起画面 */
+/* 画布外的名字输入浮层:固定视口顶部,不受画布 transform 影响,手机键盘不再顶动画面 */
+#namefix{position:fixed;inset:0;z-index:99999;display:none;flex-direction:column;align-items:center;background:rgba(40,25,12,.5);padding:7vh 4vw 0;box-sizing:border-box}
+#namefix.show{display:flex;animation:fadein .2s}
+.nf-panel{width:100%;max-width:520px;box-sizing:border-box;padding:18px 18px 16px;border-radius:22px;background:#f7ecd6;box-shadow:0 8px 30px rgba(0,0,0,.45);border:3px solid #d9a86a}
+.nf-title{font-size:min(6vw,30px);font-weight:800;text-align:center;color:#7a4413}
+.nf-hint{font-size:min(3.6vw,15px);font-weight:700;text-align:center;color:#8a5a28;margin:4px 0 10px}
+.nf-plate{position:relative;width:100%;aspect-ratio:1697/603;background-size:contain;background-repeat:no-repeat;background-position:center}
+.nf-input{position:absolute;left:25%;width:59%;top:30%;height:38%;border:none;background:transparent;text-align:center;font-family:inherit;font-weight:800;font-size:min(6.5vw,34px);color:#5c3a17;outline:none;box-sizing:border-box;padding:0}
+.nf-input::placeholder{color:#bfa06e;font-weight:700}
+.nf-btns{display:flex;gap:14px;margin-top:12px}
+.nf-btn{flex:1;border:none;border-radius:14px;padding:14px 0;font-family:inherit;font-size:min(5.2vw,24px);font-weight:800;color:#fff;background:#e0842a;box-shadow:0 3px 0 #b5641a;cursor:pointer}
+.nf-btn.ghost{background:#efe0c6;color:#8a5a28;box-shadow:0 3px 0 #cdb389}
+.nf-btn:active{transform:translateY(2px);box-shadow:none}
 @keyframes fadein{from{opacity:0}to{opacity:1}}
 /* 用 border-image 九宫格:边框角固定,中段拉伸,任意高度边框厚度都正确,内容干净填满框内 */
 .sheet{border:42px solid transparent;border-image:var(--ui-panel) 155 fill;padding:12px;width:100%;height:90%;max-height:90%;max-width:none;
@@ -335,6 +348,7 @@ body.speaking .dayrow{opacity:0;pointer-events:none}
 
 <div class="mask" id="mask"><div class="sheet" id="sheet"></div></div>
 </div><!-- /frame -->
+<div id="namefix"></div><!-- 画布外的名字输入浮层，避免手机键盘顶动缩放画布 -->
 
 <script>
 // 主屏幕App(standalone)用独立存档命名空间:浏览器里的进度/测试不带进App,新装App=全新开始
@@ -769,21 +783,24 @@ async function transformTo(sk){
 function editName(){ openNameInput(); }
 function openNameInput(){
   sfx.play('ui.tap'); sfx.play('ui.panelOpen');
-  const sh=document.getElementById('sheet'); sh.classList.add('compact'); sh.classList.remove('album');
   const dlg='assets/dialog-'+(SKIN==='jjb'?'jjb':'bubu')+'.webp';
-  sh.innerHTML=
-    '<h2>给'+(SKIN==='jjb'?'倔强卜卜':'卜卜')+'起名字</h2>'+
-    '<div class="hint">悄悄话:名字栏也许藏着小秘密…</div>'+
-    '<div class="nm-plate" style="background-image:url('+dlg+')"><input class="nm-input" id="nameInput" maxlength="20" autocomplete="off" placeholder="输入名字"></div>'+
-    '<div class="nm-btns"><button class="closebtn nm-ghost" onclick="closeMask()">取消</button><button class="closebtn" onclick="submitNameFromInput()">确定</button></div>';
+  const nf=document.getElementById('namefix');
+  nf.innerHTML=
+    '<div class="nf-panel">'+
+    '<div class="nf-title">给'+(SKIN==='jjb'?'倔强卜卜':'卜卜')+'起名字</div>'+
+    '<div class="nf-hint">悄悄话:名字栏也许藏着小秘密…</div>'+
+    '<div class="nf-plate" style="background-image:url('+dlg+')"><input class="nf-input" id="nameInput" maxlength="20" autocomplete="off" placeholder="输入名字"></div>'+
+    '<div class="nf-btns"><button class="nf-btn ghost" onclick="closeNameInput()">取消</button><button class="nf-btn" onclick="submitNameFromInput()">确定</button></div>'+
+    '</div>';
   const inp=document.getElementById('nameInput'); inp.value=S.name||(SKIN==='jjb'?'倔强卜卜':'卜卜');
   inp.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); submitNameFromInput(); } });
-  const mk=document.getElementById('mask'); mk.classList.add('nmopen'); mk.classList.add('show');
-  setTimeout(function(){ try{inp.focus({preventScroll:true}); inp.select();}catch(e){} }, 60);
+  nf.classList.add('show');
+  setTimeout(function(){ try{inp.focus(); inp.select();}catch(e){} }, 60);
 }
+function closeNameInput(){ try{sfx.play('ui.panelClose');}catch(e){} document.getElementById('namefix').classList.remove('show'); }
 function submitNameFromInput(){
   const inp=document.getElementById('nameInput'); if(!inp) return;
-  const n=inp.value; closeMask(); submitName(n);
+  const n=inp.value; closeNameInput(); submitName(n);
 }
 function submitName(n){
   if(n===null||n===undefined) return;
