@@ -660,12 +660,13 @@ async function feed(id){
     emote('😌'); say('卜卜吃饱啦，吃不下咯～'); render(); acting=false; return;
   }
   // 吃饭动画：5帧咀嚼序列 张嘴咬→塞满→左右腮嚼→吞咽,循环2轮 + 身体咀嚼晃动
-  const seq=['eat1','eat2','eat4','eat5','eat3'];
+  // 倔强卜的 eat1/eat2 素材几乎一样(张嘴帧),会显得重复+张嘴过久 → 倔强卜跳过 eat2 且张嘴帧更短
+  const seq=(SKIN==='jjb')?['eat1','eat4','eat5','eat3']:['eat1','eat2','eat4','eat5','eat3'];
   const pImg=document.getElementById('petImg'), pet=document.getElementById('pet');
   pet.classList.add('eating');
   sfx.startLoop('food.chew');
   for(let round=0;round<2;round++){
-    for(const fr of seq){ if(fr==='eat1')sfx.play('food.bite'); faceOverride=fr; pImg.src=FRM(fr); await sleep(190); }
+    for(const fr of seq){ if(fr==='eat1')sfx.play('food.bite'); faceOverride=fr; pImg.src=FRM(fr); await sleep((SKIN==='jjb'&&fr==='eat1')?120:190); }
   }
   sfx.stopLoop('food.chew'); sfx.play('food.swallow');
   pet.classList.remove('eating'); faceOverride=null;
